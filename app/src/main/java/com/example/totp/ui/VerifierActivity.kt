@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.core.graphics.scaleMatrix
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.MutableLiveData
 import com.example.totp.bean.Verifier
@@ -39,11 +40,16 @@ class VerifierActivity : AppCompatActivity() {
         }
 
         binding.etSecret.addTextChangedListener {
-            verifier.value?.secret = it.toString()
+            verifier.value?.secret = it.toString().uppercase()
         }
 
         binding.btnSave.setOnClickListener {
-            if (!secretIsValid()) Toast.makeText(
+            if (secretIsEmpty()) Toast.makeText(
+                this@VerifierActivity,
+                "密钥不能为空",
+                Toast.LENGTH_SHORT
+            ).show()
+            else if (!secretIsValid()) Toast.makeText(
                 this@VerifierActivity,
                 "密钥含有不合法字符",
                 Toast.LENGTH_SHORT
@@ -55,9 +61,15 @@ class VerifierActivity : AppCompatActivity() {
         }
     }
 
+    private fun secretIsEmpty(): Boolean {
+        val secret = verifier.value?.secret ?: return true
+        return secret.isEmpty()
+    }
+
     private fun secretIsValid(): Boolean {
-        binding.etSecret.text.toString().forEach {
-            if (it !in Base32String.KEYS) {
+        val secret = verifier.value?.secret ?: return false
+        secret.forEach {
+            if (it.uppercase() !in Base32String.KEYS) {
                 return false
             }
         }

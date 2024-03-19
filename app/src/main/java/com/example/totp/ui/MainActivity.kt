@@ -3,6 +3,8 @@ package com.example.totp.ui
 import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.ViewGroup
+import android.widget.ProgressBar
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.chad.library.adapter.base.BaseQuickAdapter
@@ -49,12 +51,6 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
-        lifecycleScope.launch {
-            while (true) {
-                delay(1000)
-                adapter.notifyDataSetChanged()
-            }
-        }
     }
 
     private fun initVerifierList() = lifecycleScope.launch {
@@ -68,12 +64,32 @@ class MainActivity : AppCompatActivity() {
 
     private val adapter =
         object : BaseQuickAdapter<Verifier, BaseViewHolder>(R.layout.item_verifier) {
+            private val progressBars = mutableListOf<ProgressBar>()
+
+            init {
+                lifecycleScope.launch {
+                    while (true) {
+                        delay(1000)
+                        progressBars.forEach {
+                            it.progress = TotpUtil.getLeftTime().toInt()
+                        }
+                    }
+                }
+            }
+
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
+                val holder = super.onCreateViewHolder(parent, viewType)
+                val progressBar = holder.getView<ProgressBar>(R.id.progressBar)
+                progressBars.add(progressBar)
+                return holder
+            }
+
             override fun convert(holder: BaseViewHolder, item: Verifier) {
                 val itemBinding = ItemVerifierBinding.bind(holder.itemView)
                 itemBinding.tvName.text = item.name
                 itemBinding.tvVerifierCode.text = TotpUtil.generate(item.secret)
                 itemBinding.progressBar.max = 30
-                itemBinding.progressBar.progress = TotpUtil.getLeftTime().toInt()
+//                itemBinding.progressBar.progress = TotpUtil.getLeftTime().toInt()
             }
 
         }
